@@ -9,8 +9,6 @@ if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "chat_input" not in st.session_state:
-    st.session_state.chat_input = ""
 if "is_thinking" not in st.session_state:
     st.session_state.is_thinking = False
 if "client" not in st.session_state:
@@ -63,7 +61,8 @@ temperature = 0.7
 # === Clear 버튼 ===
 if st.sidebar.button("🧹 대화 초기화"):
     st.session_state.messages = [{"role": "system", "content": default_system_prompt}]
-    st.session_state.chat_input = ""
+    if "chat_input" in st.session_state:
+        del st.session_state["chat_input"]
     st.session_state.is_thinking = False
 
 # === 대화 출력 ===
@@ -78,7 +77,7 @@ for msg in st.session_state.messages[1:]:
 if st.session_state.is_thinking:
     st.info("🤖 GPT가 응답 중입니다... 잠시만 기다려주세요.")
 else:
-    user_input = st.text_area(
+    st.text_area(
         "메시지를 입력하세요:",
         key="chat_input",
         height=150,
@@ -86,7 +85,7 @@ else:
     )
 
 # === GPT 응답 처리 ===
-if st.button("💬 물어보기", disabled=st.session_state.is_thinking) and st.session_state.chat_input.strip():
+if st.button("💬 물어보기", disabled=st.session_state.is_thinking) and st.session_state.get("chat_input", "").strip():
     st.session_state.is_thinking = True
     st.session_state.messages.append({"role": "user", "content": st.session_state.chat_input})
 
@@ -104,6 +103,8 @@ if st.button("💬 물어보기", disabled=st.session_state.is_thinking) and st.
             st.error(f"오류 발생: {e}")
         finally:
             st.session_state.is_thinking = False
-            # st.session_state.chat_input = ""
-            # 대신 rerun으로 초기화 유도
-            st.rerun()
+            # ✅ 입력창 값 초기화
+            if "chat_input" in st.session_state:
+                del st.session_state["chat_input"]
+
+    st.rerun()
